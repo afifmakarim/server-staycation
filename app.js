@@ -9,7 +9,7 @@ const flash = require('connect-flash');
 
 // import mongoose
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost/db_bwamern', {
+mongoose.connect('mongodb://localhost/db_staycation', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,

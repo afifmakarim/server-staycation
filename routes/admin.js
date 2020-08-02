@@ -1,8 +1,14 @@
 const router = require('express').Router();
 const adminController = require('../controllers/adminControllers')
 const { upload, uploadMultiple} = require('../middleware/multer');
+const auth = require('../middleware/auth');
 
+router.get('/signin', adminController.viewSignin);
+router.post('/signin', adminController.actionSignin);
+router.use(auth);
+router.get('/logout', adminController.actionLogout);
 router.get('/dashboard', adminController.viewDashboard);
+
 router.get('/category', adminController.viewCategory);
 router.post('/category', adminController.addCategory);
 router.put('/category', adminController.editCategory);
@@ -28,5 +34,5 @@ router.put('/item/update/activity', upload, adminController.editActivity);
 router.delete('/item/:itemId/activity/:id', adminController.deleteActivity);
 
 router.get('/booking', adminController.viewBooking);
-
+router.get('/booking/:id', adminController.showDetailBooking);
 module.exports = router;

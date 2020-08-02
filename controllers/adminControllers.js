@@ -4,15 +4,71 @@ const Item = require('../models/item')
 const Image = require('../models/image')
 const Feature = require('../models/feature')
 const Activity = require('../models/activity')
+const Users = require('../models/users')
+const Booking = require('../models/booking')
+const Member = require('../models/member')
 
+const bcrypt = require('bcrypt')
 const fs = require('fs-extra');
 const path = require('path');
 const e = require('express');
 const { utimesSync } = require('fs-extra');
 
 module.exports = {
+    viewSignin : async (req, res) => {
+        try {
+            const alertMessage = req.flash('alertMessage');
+            const alertStatus = req.flash('alertStatus');
+            const alert = { message: alertMessage, status: alertStatus }
+            if(req.session.user == null || req.session.user == undefined) {
+                res.render('index', {
+                    alert,
+                    title: "StayCation | Login"
+                })
+            } else {
+                res.redirect('/admin/dashboard');
+            }
+        } catch (error) {
+            res.redirect('/admin/signin');
+        }
+    },
+    actionSignin : async (req, res) => {
+        try {
+            const { username, password } = req.body;
+            const user = await Users.findOne({ username: username });
+            if (!user) {
+                req.flash('alertMessage', 'User yang anda masukan tidak ada!!');
+                req.flash('alertStatus', 'danger')
+                res.redirect('/admin/signin');
+            }
+            const isPasswordMatch = await bcrypt.compare(password, user.password);
+            if(!isPasswordMatch) {
+                req.flash('alertMessage', 'Password Salah!!');
+                req.flash('alertStatus', 'danger')
+                res.redirect('/admin/signin');
+            }
+            req.session.user = {
+                id: user.id,
+                username: user.username
+            }
+            res.redirect('/admin/dashboard')
+        } catch (error) {
+            res.redirect('/admin/signin');
+        }
+    },
+
+    actionLogout :  (req, res) => {
+        req.session.destroy();
+        res.redirect('/admin/signin');
+    },
+
     viewDashboard: (req, res) => {
-        res.render('admin/dashboard/view_dashboard', {title: "StayCation | Dashboard" });
+        try {
+            res.render('admin/dashboard/view_dashboard', { title: "StayCation | Dashboard", user: req.session.user });
+            
+        } catch (error) {
+            
+        }
     },
 
     viewCategory: async (req, res) => {
@@ -21,7 +77,7 @@ module.exports = {
         const alertMessage = req.flash('alertMessage');
         const alertStatus = req.flash('alertStatus');
         const alert = { message: alertMessage, status: alertStatus }
-        res.render('admin/category/view_category', { category, alert, title: "StayCation | Category" });
+        res.render('admin/category/view_category', { category, alert, title: "StayCation | Category", user: req.session.user});
         } catch(error) {
             res.redirect('/admin/category');
         }
@@ -79,7 +135,7 @@ module.exports = {
             const alertMessage = req.flash('alertMessage');
             const alertStatus = req.flash('alertStatus');
             const alert = { message: alertMessage, status: alertStatus }
-            res.render('admin/bank/view_bank', {title: "StayCation | Bank", alert, bank});
+            res.render('admin/bank/view_bank', {title: "StayCation | Bank", alert, bank, user: req.session.user});
         } catch (error) {
             req.flash('alertMessage', `${error.message}`);
             req.flash('alertStatus', 'danger')
@@ -159,7 +215,7 @@ module.exports = {
             const alertMessage = req.flash('alertMessage');
             const alertStatus = req.flash('alertStatus');
             const alert = { message: alertMessage, status: alertStatus }
-            res.render('admin/item/view_item', {title: "StayCation | Item", category, alert, item, action: 'view'});
+            res.render('admin/item/view_item', {title: "StayCation | Item", category, alert, item, user: req.session.user, action: 'view'});
             
         } catch (error) {
             req.flash('alertMessage', `${error.message}`);
@@ -208,7 +264,7 @@ module.exports = {
             const alertMessage = req.flash('alertMessage');
             const alertStatus = req.flash('alertStatus');
             const alert = { message: alertMessage, status: alertStatus }
-            res.render('admin/item/view_item', {title: "StayCation | Show Image Item", alert, item, action: 'show image'});
+            res.render('admin/item/view_item', {title: "StayCation | Show Image Item", user: req.session.user, alert, item, action: 'show image'});
             
         } catch (error) {
             req.flash('alertMessage', `${error.message}`);
@@ -227,7 +283,7 @@ module.exports = {
             const alertMessage = req.flash('alertMessage');
             const alertStatus = req.flash('alertStatus');
             const alert = { message: alertMessage, status: alertStatus }
-            res.render('admin/item/view_item', {title: "StayCation | Edit Item", alert, item, category, action: 'edit'});
+            res.render('admin/item/view_item', {title: "StayCation | Edit Item", user: req.session.user, alert, item, category, action: 'edit'});
             
         } catch (error) {
             req.flash('alertMessage', `${error.message}`);
@@ -311,8 +367,8 @@ module.exports = {
             const alert = { message: alertMessage, status: alertStatus }
             const feature = await Feature.find({ itemId: itemId });
             const activity = await Activity.find({ itemId: itemId });
-
-            res.render('admin/item/detail_item/view_detail_item', {title: "StayCation | Detail Item", alert, itemId, feature, activity});
+            console.log(feature);
+            res.render('admin/item/detail_item/view_detail_item', {title: "StayCation | Detail Item", user: req.session.user, alert, itemId, feature, activity});
         } catch (error) {
             req.flash('alertMessage', `${error.message}`);
             req.flash('alertStatus', 'danger')
@@ -478,7 +534,29 @@ module.exports = {
 
     },
 
-    viewBooking: (req, res) => {
-        res.render('admin/booking/view_booking', {title: "StayCation | Booking" });
+    viewBooking: async (req, res) => {
+        try {
+            const booking = await Booking.find()
+                .populate('memberId')
+                .populate('bankId');
+            res.render('admin/booking/view_booking', {title: "StayCation | Booking", user: req.session.user, booking});
+            
+        } catch (error) {
+            res.redirect('/admin/booking')
+        }
+    },
+
+    showDetailBooking: async (req, res) => {
+        const { id } = req.params;
+        try {
+            const booking = await Booking.findOne({_id : id})
+                .populate('memberId')
+                .populate('bankId');
+            res.render('admin/booking/show_detail_booking', {title: "StayCation | Detail Booking", user: req.session.user, booking});
+            
+        } catch (error) {
+            
+        }
+
     }
 }
