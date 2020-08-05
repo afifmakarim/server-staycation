@@ -10,12 +10,15 @@
                                     <img src="http://localhost:3000/<%= booking.payments.proofPayment %>" alt="image"
                                     style="width: 100%; display: block;">
                                     <div class="row ml-1">
-                                    <form action="/admin/bank/?_method=DELETE" method="POST" >
+                                      <% if(booking.payments.status == 'Proses') { %>
+      
+                                    <form action="/admin/booking/<%= booking.id %>/confirmation?_method=PUT" method="POST" >
                                         <button type="submit" class="btn btn-success btn-sm">Confirmation <i class="fas fa-check"></i></button>
                                       </form>
-                                      <form action="/admin/bank/?_method=DELETE" method="POST" class="ml-2">
+                                      <form action="/admin/booking/<%= booking.id %>/reject?_method=PUT" method="POST" class="ml-2">
                                         <button type="submit" class="btn btn-danger btn-sm">Reject <i class="fas fa-times"></i></button>
                                       </form>
+                                    <% } %>
                                     </div>
                                   </div>
                                   <div class="col-md-8">
