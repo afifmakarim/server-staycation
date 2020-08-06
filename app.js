@@ -9,7 +9,7 @@ const flash = require('connect-flash');
 
 // import mongoose
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost/db_staycation', {
+mongoose.connect('mongodb://admin:Indonesia92@belajar-mongo-shard-00-00-8vwyw.mongodb.net:27017,belajar-mongo-shard-00-01-8vwyw.mongodb.net:27017,belajar-mongo-shard-00-02-8vwyw.mongodb.net:27017/db_staycation?ssl=true&replicaSet=belajar-mongo-shard-0&authSource=admin&retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
